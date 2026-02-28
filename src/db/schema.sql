@@ -72,6 +72,13 @@ CREATE TABLE IF NOT EXISTS saved_articles (
   UNIQUE(article_id)
 );
 
+CREATE TABLE IF NOT EXISTS read_articles (
+  id SERIAL PRIMARY KEY,
+  article_id INTEGER REFERENCES articles(id) ON DELETE CASCADE,
+  read_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(article_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_articles_feed_type ON articles(feed_type);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_articles_relevance ON articles(relevance_score DESC);

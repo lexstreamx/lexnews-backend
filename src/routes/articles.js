@@ -88,6 +88,7 @@ router.get('/', async (req, res) => {
           '[]'
         ) AS categories,
         EXISTS(SELECT 1 FROM saved_articles sa WHERE sa.article_id = a.id) AS is_saved,
+        EXISTS(SELECT 1 FROM read_articles ra WHERE ra.article_id = a.id) AS is_read,
         CASE WHEN jm.id IS NOT NULL THEN
           json_build_object(
             'ecli', jm.ecli,
@@ -168,6 +169,36 @@ router.delete('/:id/save', async (req, res) => {
   } catch (err) {
     console.error('Error unsaving article:', err);
     res.status(500).json({ error: 'Failed to unsave article' });
+  }
+});
+
+// POST /api/articles/:id/read
+router.post('/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query(
+      `INSERT INTO read_articles (article_id) VALUES ($1) ON CONFLICT DO NOTHING`,
+      [id]
+    );
+    res.json({ read: true });
+  } catch (err) {
+    console.error('Error marking article as read:', err);
+    res.status(500).json({ error: 'Failed to mark article as read' });
+  }
+});
+
+// DELETE /api/articles/:id/read
+router.delete('/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query(
+      `DELETE FROM read_articles WHERE article_id = $1`,
+      [id]
+    );
+    res.json({ read: false });
+  } catch (err) {
+    console.error('Error marking article as unread:', err);
+    res.status(500).json({ error: 'Failed to mark article as unread' });
   }
 });
 
