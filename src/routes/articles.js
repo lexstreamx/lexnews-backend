@@ -27,8 +27,14 @@ router.get('/', async (req, res) => {
     }
 
     if (jurisdiction) {
-      conditions.push(`a.jurisdiction ILIKE $${paramIndex++}`);
-      params.push(`%${jurisdiction}%`);
+      const jurisdictions = jurisdiction.split(',').map(j => j.trim()).filter(Boolean);
+      if (jurisdictions.length === 1) {
+        conditions.push(`a.jurisdiction = $${paramIndex++}`);
+        params.push(jurisdictions[0]);
+      } else if (jurisdictions.length > 1) {
+        conditions.push(`a.jurisdiction = ANY($${paramIndex++}::text[])`);
+        params.push(jurisdictions);
+      }
     }
 
     if (search) {
@@ -38,12 +44,22 @@ router.get('/', async (req, res) => {
     }
 
     if (category) {
-      conditions.push(`EXISTS (
-        SELECT 1 FROM article_categories ac
-        JOIN legal_categories lc ON lc.id = ac.category_id
-        WHERE ac.article_id = a.id AND lc.slug = $${paramIndex++}
-      )`);
-      params.push(category);
+      const categories = category.split(',').map(c => c.trim()).filter(Boolean);
+      if (categories.length === 1) {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM article_categories ac
+          JOIN legal_categories lc ON lc.id = ac.category_id
+          WHERE ac.article_id = a.id AND lc.slug = $${paramIndex++}
+        )`);
+        params.push(categories[0]);
+      } else if (categories.length > 1) {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM article_categories ac
+          JOIN legal_categories lc ON lc.id = ac.category_id
+          WHERE ac.article_id = a.id AND lc.slug = ANY($${paramIndex++}::text[])
+        )`);
+        params.push(categories);
+      }
     }
 
     if (saved_only === 'true') {
@@ -109,6 +125,19 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('Error fetching articles:', err);
     res.status(500).json({ error: 'Failed to fetch articles' });
+  }
+});
+
+// GET /api/articles/jurisdictions — distinct jurisdiction values
+router.get('/jurisdictions', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT jurisdiction FROM articles WHERE jurisdiction IS NOT NULL AND jurisdiction != '' ORDER BY jurisdiction`
+    );
+    res.json({ jurisdictions: result.rows.map(r => r.jurisdiction) });
+  } catch (err) {
+    console.error('Error fetching jurisdictions:', err);
+    res.status(500).json({ error: 'Failed to fetch jurisdictions' });
   }
 });
 
