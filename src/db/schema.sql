@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS articles (
   link TEXT UNIQUE NOT NULL,
   description TEXT,
   content TEXT,
+  image_url TEXT,
   source_name TEXT,
   source_url TEXT,
   published_at TIMESTAMPTZ,
