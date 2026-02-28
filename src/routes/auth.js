@@ -169,6 +169,7 @@ router.post('/login', async (req, res) => {
     });
 
     res.json({
+      token: sessionToken,
       user: {
         id: dbUser.id,
         email: dbUser.email,
