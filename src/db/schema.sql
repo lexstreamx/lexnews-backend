@@ -59,11 +59,11 @@ CREATE TABLE IF NOT EXISTS judgment_metadata (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_judgment_case_number ON judgment_metadata(case_number);
-CREATE INDEX idx_judgment_court ON judgment_metadata(court);
-CREATE INDEX idx_judgment_ecli ON judgment_metadata(ecli);
-CREATE INDEX idx_judgment_decision_date ON judgment_metadata(decision_date DESC);
-CREATE INDEX idx_judgment_ai_summarized ON judgment_metadata(ai_summarized);
+CREATE INDEX IF NOT EXISTS idx_judgment_case_number ON judgment_metadata(case_number);
+CREATE INDEX IF NOT EXISTS idx_judgment_court ON judgment_metadata(court);
+CREATE INDEX IF NOT EXISTS idx_judgment_ecli ON judgment_metadata(ecli);
+CREATE INDEX IF NOT EXISTS idx_judgment_decision_date ON judgment_metadata(decision_date DESC);
+CREATE INDEX IF NOT EXISTS idx_judgment_ai_summarized ON judgment_metadata(ai_summarized);
 
 CREATE TABLE IF NOT EXISTS saved_articles (
   id SERIAL PRIMARY KEY,
@@ -72,12 +72,12 @@ CREATE TABLE IF NOT EXISTS saved_articles (
   UNIQUE(article_id)
 );
 
-CREATE INDEX idx_articles_feed_type ON articles(feed_type);
-CREATE INDEX idx_articles_published_at ON articles(published_at DESC);
-CREATE INDEX idx_articles_relevance ON articles(relevance_score DESC);
-CREATE INDEX idx_articles_jurisdiction ON articles(jurisdiction);
-CREATE INDEX idx_articles_ai_classified ON articles(ai_classified);
-CREATE INDEX idx_article_categories_category ON article_categories(category_id);
+CREATE INDEX IF NOT EXISTS idx_articles_feed_type ON articles(feed_type);
+CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_articles_relevance ON articles(relevance_score DESC);
+CREATE INDEX IF NOT EXISTS idx_articles_jurisdiction ON articles(jurisdiction);
+CREATE INDEX IF NOT EXISTS idx_articles_ai_classified ON articles(ai_classified);
+CREATE INDEX IF NOT EXISTS idx_article_categories_category ON article_categories(category_id);
 
 -- Seed the 28 legal categories
 INSERT INTO legal_categories (name, slug) VALUES
