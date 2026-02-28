@@ -15,6 +15,7 @@ const parser = new RSSParser({
 const FEEDS = [
   { url: 'https://rss.app/feeds/_wFzzGEbWrnRHQnox.xml', type: 'news' },
   { url: 'https://rss.app/feeds/_1zigjyGFzmQ40NLk.xml', type: 'blogpost' },
+  { url: 'https://rss.app/feeds/_UuzpzghFv55Ljedv.xml', type: 'regulatory' },
 ];
 
 function extractImageUrl(item) {
