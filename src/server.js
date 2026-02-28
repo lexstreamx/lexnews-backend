@@ -1,10 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const cron = require('node-cron');
 const articlesRouter = require('./routes/articles');
 const categoriesRouter = require('./routes/categories');
 const feedsRouter = require('./routes/feeds');
+const authRouter = require('./routes/auth');
+const { requireAuth } = require('./middleware/auth');
 const { fetchAllFeeds } = require('./services/rssFetcher');
 const { classifyUnclassifiedArticles } = require('./services/classifier');
 const { updateRelevanceScores } = require('./services/relevance');
@@ -29,11 +32,13 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(cookieParser());
 
-// Routes
-app.use('/api/articles', articlesRouter);
+// Routes — auth and categories are public, articles and feeds require auth
+app.use('/api/auth', authRouter);
 app.use('/api/categories', categoriesRouter);
-app.use('/api/feeds', feedsRouter);
+app.use('/api/articles', requireAuth, articlesRouter);
+app.use('/api/feeds', requireAuth, feedsRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

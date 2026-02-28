@@ -64,8 +64,9 @@ router.get('/', async (req, res) => {
 
     if (saved_only === 'true') {
       conditions.push(`EXISTS (
-        SELECT 1 FROM saved_articles sa WHERE sa.article_id = a.id
+        SELECT 1 FROM saved_articles sa WHERE sa.article_id = a.id AND sa.user_id = $${paramIndex++}
       )`);
+      params.push(req.user.id);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -87,8 +88,8 @@ router.get('/', async (req, res) => {
           ) FILTER (WHERE lc.id IS NOT NULL),
           '[]'
         ) AS categories,
-        EXISTS(SELECT 1 FROM saved_articles sa WHERE sa.article_id = a.id) AS is_saved,
-        EXISTS(SELECT 1 FROM read_articles ra WHERE ra.article_id = a.id) AS is_read,
+        EXISTS(SELECT 1 FROM saved_articles sa WHERE sa.article_id = a.id AND sa.user_id = $${paramIndex}) AS is_saved,
+        EXISTS(SELECT 1 FROM read_articles ra WHERE ra.article_id = a.id AND ra.user_id = $${paramIndex++}) AS is_read,
         CASE WHEN jm.id IS NOT NULL THEN
           json_build_object(
             'ecli', jm.ecli,
@@ -111,7 +112,7 @@ router.get('/', async (req, res) => {
       GROUP BY a.id, jm.id
       ORDER BY a.relevance_score DESC, a.published_at DESC
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
-      [...params, parseInt(limit), offset]
+      [...params, req.user.id, parseInt(limit), offset]
     );
 
     res.json({
@@ -147,8 +148,8 @@ router.post('/:id/save', async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query(
-      `INSERT INTO saved_articles (article_id) VALUES ($1) ON CONFLICT DO NOTHING`,
-      [id]
+      `INSERT INTO saved_articles (article_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [id, req.user.id]
     );
     res.json({ saved: true });
   } catch (err) {
@@ -162,8 +163,8 @@ router.delete('/:id/save', async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query(
-      `DELETE FROM saved_articles WHERE article_id = $1`,
-      [id]
+      `DELETE FROM saved_articles WHERE article_id = $1 AND user_id = $2`,
+      [id, req.user.id]
     );
     res.json({ saved: false });
   } catch (err) {
@@ -177,8 +178,8 @@ router.post('/:id/read', async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query(
-      `INSERT INTO read_articles (article_id) VALUES ($1) ON CONFLICT DO NOTHING`,
-      [id]
+      `INSERT INTO read_articles (article_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [id, req.user.id]
     );
     res.json({ read: true });
   } catch (err) {
@@ -192,8 +193,8 @@ router.delete('/:id/read', async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query(
-      `DELETE FROM read_articles WHERE article_id = $1`,
-      [id]
+      `DELETE FROM read_articles WHERE article_id = $1 AND user_id = $2`,
+      [id, req.user.id]
     );
     res.json({ read: false });
   } catch (err) {
